@@ -146,6 +146,17 @@ typedef struct // may need to be adjusted for other compilers and bitfield order
 #define USYSEX_GI_ID_RESPONSE   0x02
 
 
+#define LEAFLABS_MMA_VENDOR_1   0x7D
+#define LEAFLABS_MMA_VENDOR_2   0x1E
+#define LEAFLABS_MMA_VENDOR_3   0x4F
+
+// move to LGL.h
+#define LGL_RESET_CMD           0x1e
+
+#define DEFAULT_MIDI_CHANNEL    0x0A
+#define DEFAULT_MIDI_DEVICE     0x0A
+#define DEFAULT_MIDI_CABLE      0x00
+
 #endif
 
 

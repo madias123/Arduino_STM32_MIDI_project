@@ -22,9 +22,9 @@ const uint8_t LcdSetDdramAddress = 0x80;    // add the address we want to set
 const uint8_t LcdSetGdramAddress = 0x80;
 
 //const unsigned int LcdCommandDelayMicros = 72 - 24; // 72us required, less 24us time to send the command @ 1MHz
-const unsigned int LcdCommandDelayMicros = 2;
-const unsigned int LcdDataDelayMicros = 2;// 10;         // Delay between sending data bytes
-const unsigned int LcdDisplayClearDelayMillis = 2;  // 1.6ms should be enough
+const unsigned int LcdCommandDelayMicros = 0;
+const unsigned int LcdDataDelayMicros = 0;// 10;         // Delay between sending data bytes
+const unsigned int LcdDisplayClearDelayMillis = 1;  // 1.6ms should be enough
 
 const unsigned int numRows = 64;
 const unsigned int numCols = 128;
@@ -177,14 +177,15 @@ void Lcd7920::begin(bool gmode)
   
   if (useSpi)
   {
-      delay(1); //dummy
+     // delay(1); //dummy
+      delayMicroseconds(60);
    // SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0);  // enable SPI, master mode, clock low when idle, data sampled on rising edge, clock = f/16 (= 1MHz), send MSB first
     //SPSR = (1 << SPI2X);  // double the speed to 2MHz (optional)
   }
 
   gfxMode = false;
   sendLcdCommand(LcdFunctionSetBasicAlpha);
-  delay(1);
+  delayMicroseconds(60);
   sendLcdCommand(LcdFunctionSetBasicAlpha);
   commandDelay();
   sendLcdCommand(LcdEntryModeSet);
@@ -369,7 +370,8 @@ void Lcd7920::flush()
         //commandDelay();    // don't seem to need a delay here
         sendLcdData(*ptr++);
         //commandDelay();    // don't seem to need as long a delay as this
-        delayMicroseconds(LcdDataDelayMicros);
+      //  delayMicroseconds(LcdDataDelayMicros);
+        //  __asm__ __volatile__("nop");
       }
     }
     startRow = numRows;
@@ -442,13 +444,15 @@ void Lcd7920::setGraphicsAddress(unsigned int r, unsigned int c)
     sendLcdCommand(LcdSetGdramAddress | (r & 31));
     //commandDelay();  // don't seem to need this one
     sendLcdCommand(LcdSetGdramAddress | c | ((r & 32) >> 2));
-    commandDelay();    // we definitely need this one
+//    commandDelay();    // we definitely need this one
+      NOP;
   }
 }
 
 void Lcd7920::commandDelay()
 {
-  delayMicroseconds(LcdCommandDelayMicros);
+ // delayMicroseconds(LcdCommandDelayMicros);
+   __asm__ __volatile__("nop");
 }
 
 // Send a command to the LCD
@@ -468,7 +472,7 @@ void Lcd7920::sendLcd(uint8_t data1, uint8_t data2)
 {
   if (useSpi)
   {
-      delay(1); // dummy
+    //  delay(1); // dummy
       /*
     SPDR = data1;
     while ((SPSR & (1 << SPIF)) == 0) { }
@@ -518,7 +522,7 @@ void Lcd7920::sendLcdSlow(uint8_t data)
  #else
  */
   // really slow version, like Arduino shiftOut function
- 
+ /*
   for (uint8_t i = 0; i < 8; ++i)
   {
     digitalWrite(dataPin, (data & 0x80) ? HIGH : LOW);
@@ -529,17 +533,30 @@ void Lcd7920::sendLcdSlow(uint8_t data)
     data <<= 1;
  
   }
-/*
-   
+  
+  */
+
+ 
     for (uint8_t i = 0; i < 8; ++i)
     {
         mosifast((data & 0x80) ? HIGH : LOW);
-       delayMicroseconds(1);
+       //delayMicroseconds(1);
+        /* no benefits!
         sckfast(HIGH);
+       //delayMicroseconds(1);
+        for (byte a=0; a<6; a++) {
+             NOP;
+        }
         sckfast(LOW);
+        for (byte a=0; a<6; a++) {
+            NOP;
+        }
+     */
+       digitalWrite(clockPin, HIGH); // do not change to high speed!
+       digitalWrite(clockPin, LOW); // do not change to high speed pin change!
         data <<= 1;
      }
-   */
+
   
 //#endif
 }

@@ -23,9 +23,11 @@
 #include <ILI9341_due.h>
 
 // For the Adafruit shield, these are the default.
-#define TFT_DC 10
-#define TFT_CS 8
-#define rst  9
+
+// For the Adafruit shield, these are the default.
+#define TFT_DC PA15
+#define TFT_CS PB4
+#define rst  PB3
 
 // Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
 ILI9341_due tft = ILI9341_due(TFT_CS, TFT_DC, rst);
@@ -105,11 +107,65 @@ void setup() {
 
 
 void loop(void) {
+  runTests();
+  return;
   for(uint8_t rotation=0; rotation<4; rotation++) {
     tft.setRotation((iliRotation)rotation);
     testText();
     delay(1000);
   }
+}
+
+void runTests()
+{
+  Serial.print(F("Screen fill              "));
+  Serial.println(testFillScreen());
+//  delay(200);
+
+  Serial.print(F("Text                     "));
+  Serial.println(testText());
+ // delay(600);
+
+  Serial.print(F("Lines                    "));
+  Serial.println(testLines(ILI9341_CYAN));
+//  delay(200);
+
+  Serial.print(F("Horiz/Vert Lines         "));
+  Serial.println(testFastLines(ILI9341_RED, ILI9341_BLUE));
+//  delay(200);
+
+  Serial.print(F("Rectangles (outline)     "));
+  Serial.println(testRects(ILI9341_GREEN));
+  delay(200);
+
+  Serial.print(F("Rectangles (filled)      "));
+  Serial.println(testFilledRects(ILI9341_YELLOW, ILI9341_MAGENTA));
+//  delay(200);
+
+  Serial.print(F("Circles (filled)         "));
+  Serial.println(testFilledCircles(10, ILI9341_MAGENTA));
+
+  Serial.print(F("Circles (outline)        "));
+  Serial.println(testCircles(10, ILI9341_WHITE));
+//  delay(200);
+
+  Serial.print(F("Triangles (outline)      "));
+  Serial.println(testTriangles());
+//  delay(200);
+
+  Serial.print(F("Triangles (filled)       "));
+  Serial.println(testFilledTriangles());
+//  delay(200);
+
+  Serial.print(F("Rounded rects (outline)  "));
+  Serial.println(testRoundRects());
+//  delay(200);
+
+  Serial.print(F("Rounded rects (filled)   "));
+  Serial.println(testFilledRoundRects());
+//  delay(200);
+  
+  
 }
 
 unsigned long testFillScreen() {

@@ -56,7 +56,7 @@
  */
 
 #include <usb_midi.h>
-
+//#include "MidiSpecs.h"
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
@@ -95,6 +95,7 @@ void USBMidi::begin(unsigned int channel) {
     lastStatusSent_ = false;
     // Don't send the extra bytes; just send deltas
     sendFullCommands_ = false;
+   
 
 }
 
@@ -197,22 +198,12 @@ void USBMidi::dispatchPacket(uint32 p)
     union EVENT_t e;
     
     e.i=p;
-    // !!!!!!!!!!!!!!!!  Add a sysex handler  FIX THIS VERY VERY SHORTLY !!!!!!!!!!!!!!
-    if (recvMode_ & MODE_PROPRIETARY
-        && CIN_IS_SYSEX(e.p.cin))
-    {
-        /* If sysex handling compiled in, just pass all data received
-         * to the sysex handler
-         */
-        
-#ifdef CONFIG_MIDI_PROPRIETARY
-//        handleSysex(p);
-#endif
-        
-        return;
-    }
+ 
     
     switch (e.p.cin) {
+        case CIN_SYSEX ... CIN_SYSEX_ENDS_IN_3:
+            handleSysex(e.p.cin,e.p.midi0,e.p.midi1,e.p.midi2);
+            break;
         case CIN_3BYTE_SYS_COMMON:
             if (e.p.midi0 == MIDIv1_SONG_POSITION_PTR) {
                 handleSongPosition(((uint16)e.p.midi2)<<7|((uint16)e.p.midi1));
@@ -287,12 +278,15 @@ void USBMidi::dispatchPacket(uint32 p)
 
 // Try to read data at serial port & pass anything read to processing function
 void USBMidi::poll(void)
-{   while(available()) {
+{
+
+    while(available()) {
         dispatchPacket(readPacket());
     }
 }
 
 static union EVENT_t outPacket; // since we only use one at a time no point in reallocating it
+
 
 // Send Midi NOTE OFF message to a given channel, with note 0-127 and velocity 0-127
 void USBMidi::sendNoteOff(unsigned int channel, unsigned int note, unsigned int velocity)
@@ -499,6 +493,54 @@ unsigned int USBMidi::getParam(unsigned int param)
     return 0;
 }
 
+
+// sysex function demo
+/*
+ void USBMidi::handleSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2) {
+ if (cin == CIN_SYSEX && midi0 == MIDIv1_SYSEX_START) // new sysex string
+ {
+ sysexstring[0] = midi1;
+ sysexstring[1] = midi2;
+ sysexpos = 2;
+ sysexflag = 0;
+ }
+ else if  (cin == CIN_SYSEX && midi1 != MIDIv1_SYSEX_START) // parsing sysex
+ {
+ sysexstring[sysexpos] = midi0;
+ sysexstring[sysexpos + 1] = midi1;
+ sysexstring[sysexpos + 2] = midi2;
+ sysexpos += 3;
+ }
+ else // sysex ends
+ {
+ byte sysexlenadd = 0;
+ if (cin == CIN_SYSEX_ENDS_IN_2)
+ sysexlenadd += 1;
+ if (cin == CIN_SYSEX_ENDS_IN_3)
+ sysexlenadd += 2;
+ sysexstring[sysexpos] = midi0;
+ sysexstring[sysexpos + 1] = midi1;
+ sysexstring[sysexpos + 2] = midi2;
+ sysexflag = 1;
+ sysexlen = sysexpos + sysexlenadd - 1;
+ sysexpos = 0;
+ }
+ if (sysexflag == 1)
+ {
+ sysexflag = 0;
+ Serial2.println();
+ Serial2.println("New sysex string:");
+ for (byte a = 0; a <= sysexlen; a++)
+ {
+ if (sysexstring[a] < 16)
+ Serial2.print("0");
+ Serial2.print(sysexstring[a], HEX);
+ Serial2.print(" ");
+ }
+ }
+ }
+*/
+//###########
 // Placeholders.  You should subclass the Midi base class and define these to have your
 //  version called.
 /*

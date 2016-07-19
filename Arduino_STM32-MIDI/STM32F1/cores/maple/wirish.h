@@ -59,6 +59,7 @@
 #include <wirish_math.h>
 #include <wirish_time.h>
 #include <wirish_constants.h>
+#include <wiring_pulse.h>
 
 #if STM32_MCU_SERIES == STM32_SERIES_F1 /* FIXME [0.0.13?] port to F2 */
 //#include <HardwareSPI.h>
@@ -73,11 +74,12 @@
 
 #include <stdint.h>
 
-#warning these are just here to get SPI to compile they need to be changed and moved!
-#define SS (1)
-#define MOSI 2
-#define MISO 3
-#define SCK 4
+
+#define SS 		BOARD_SPI1_NSS_PIN
+#define MOSI 	BOARD_SPI1_MOSI_PIN 
+#define MISO 	BOARD_SPI1_MISO_PIN
+#define SCK 	BOARD_SPI1_SCK_PIN
+
 
 typedef unsigned int word;
 // typedef uint16 word;// definition from Arduino website, now appears to be incorrect for 32 bit devices

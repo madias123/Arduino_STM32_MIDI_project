@@ -512,13 +512,16 @@ int16_t Adafruit_GFX::drawUnicode(uint16_t uniCode, int16_t x, int16_t y, int16_
    uint16_t height = 0;
    uint32_t flash_address = 0;
    int16_t gap = 0;
-
-//   if (size == 1) {
-//     flash_address = pgm_read_dword(&chrtbl_f8[uniCode]);
-//     width = pgm_read_byte(widtbl_f8+uniCode);
-//     height = chr_hgt_f8;
-//     gap = 1;
-//   }
+/*
+#ifdef LOAD_GLCD
+  if (size == 1) {
+   flash_address = pgm_read_dword(&chrtbl_f8[uniCode]);
+   width = pgm_read_byte(widtbl_f8+uniCode);
+    height = chr_hgt_f8;
+     gap = 1;
+   }
+#endif
+   */ 
 #ifdef LOAD_FONT2
    if (size == 2) {
      flash_address = pgm_read_dword(&chrtbl_f16[uniCode]);

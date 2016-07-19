@@ -1,6 +1,7 @@
 /*
 See rights and use declaration in License.h
-This library has been modified for the Maple Mini
+This library has been modified for the Maple Mini.
+Includes DMA transfers on DMA1 CH2 and CH3.
 */
 #include <Adafruit_ILI9341_STM.h>
 #include <avr/pgmspace.h>
@@ -10,13 +11,9 @@ This library has been modified for the Maple Mini
 #include "wiring_private.h"
 #include <SPI.h> // Using library SPI in folder: D:\Documents\Arduino\hardware\STM32\STM32F1XX\libraries\SPI
 
-//Used for DMA transfers in STM32F1XX
-#if defined (__STM32F1__)
-volatile bool dma1_ch3_Active = false;
-#endif
 
 // Constructor when using software SPI.  All output pins are configurable.
-Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi,
+Adafruit_ILI9341_STM::Adafruit_ILI9341_STM(int8_t cs, int8_t dc, int8_t mosi,
     int8_t sclk, int8_t rst, int8_t miso) : Adafruit_GFX(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
   _cs   = cs;
   _dc   = dc;
@@ -30,7 +27,7 @@ Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t mosi,
 
 // Constructor when using hardware SPI.  Faster, but must use SPI pins
 // specific to each board type (e.g. 11,13 for Uno, 51,52 for Mega, etc.)
-Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) : Adafruit_GFX(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
+Adafruit_ILI9341_STM::Adafruit_ILI9341_STM(int8_t cs, int8_t dc, int8_t rst) : Adafruit_GFX(ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT) {
   _cs   = cs;
   _dc   = dc;
   _rst  = rst;
@@ -38,12 +35,8 @@ Adafruit_ILI9341::Adafruit_ILI9341(int8_t cs, int8_t dc, int8_t rst) : Adafruit_
   _mosi  = _sclk = 0;
 }
 
-inline void DMA1_CH3_Event() {
-  dma1_ch3_Active = 0;
-  dma_disable(DMA1, DMA_CH3);
-}
 
-void Adafruit_ILI9341::spiwrite(uint8_t c) {
+void Adafruit_ILI9341_STM::spiwrite(uint8_t c) {
 
   //Serial.print("0x"); Serial.print(c, HEX); Serial.print(", ");
 
@@ -58,7 +51,7 @@ void Adafruit_ILI9341::spiwrite(uint8_t c) {
 #elif defined(TEENSYDUINO)
     SPI.transfer(c);
 #elif defined (__STM32F1__)
-    SPI.transfer(c);
+    SPI.write(c);
 #elif defined (__arm__)
     SPI.setClockDivider(11); // 8-ish MHz (full! speed!)
     SPI.setBitOrder(MSBFIRST);
@@ -85,32 +78,22 @@ void Adafruit_ILI9341::spiwrite(uint8_t c) {
 }
 
 
-void Adafruit_ILI9341::writecommand(uint8_t c) {
+void Adafruit_ILI9341_STM::writecommand(uint8_t c) {
   *dcport &=  ~dcpinmask;
-  //digitalWrite(_dc, LOW);
-  //*clkport &= ~clkpinmask; // clkport is a NULL pointer when hwSPI==true
-  //digitalWrite(_sclk, LOW);
   *csport &= ~cspinmask;
-  //digitalWrite(_cs, LOW);
 
   spiwrite(c);
 
   *csport |= cspinmask;
-  //digitalWrite(_cs, HIGH);
 }
 
 
-void Adafruit_ILI9341::writedata(uint8_t c) {
+void Adafruit_ILI9341_STM::writedata(uint8_t c) {
   *dcport |=  dcpinmask;
-  //digitalWrite(_dc, HIGH);
-  //*clkport &= ~clkpinmask; // clkport is a NULL pointer when hwSPI==true
-  //digitalWrite(_sclk, LOW);
   *csport &= ~cspinmask;
-  //digitalWrite(_cs, LOW);
 
   spiwrite(c);
 
-  //digitalWrite(_cs, HIGH);
   *csport |= cspinmask;
 }
 
@@ -141,7 +124,7 @@ static inline void spi_end(void) {
 
 // Companion code to the above tables.  Reads and issues
 // a series of LCD commands stored in PROGMEM byte array.
-void Adafruit_ILI9341::commandList(uint8_t *addr) {
+void Adafruit_ILI9341_STM::commandList(uint8_t *addr) {
 
   uint8_t  numCommands, numArgs;
   uint16_t ms;
@@ -165,7 +148,7 @@ void Adafruit_ILI9341::commandList(uint8_t *addr) {
 }
 
 
-void Adafruit_ILI9341::begin(void) {
+void Adafruit_ILI9341_STM::begin(void) {
   if (_rst > 0) {
     pinMode(_rst, OUTPUT);
     digitalWrite(_rst, LOW);
@@ -195,13 +178,6 @@ void Adafruit_ILI9341::begin(void) {
     SPI.setClockDivider(SPI_CLOCK_DIV2);
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE0);
-    // DMA setup stuff. We use a line buffer and usa DMA for filling lines and blocks.
-    spi_tx_dma_enable(SPI1);
-    dma_init(DMA1);
-    dma_attach_interrupt(DMA1, DMA_CH3, DMA1_CH3_Event);
-    dma_setup_transfer(DMA1, DMA_CH3, &SPI1->regs->DR, DMA_SIZE_8BITS,
-                       lineBuffer, DMA_SIZE_8BITS, (DMA_MINC_MODE |  DMA_FROM_MEM | DMA_TRNS_CMPLT));
-
 
 #elif defined (__arm__)
     SPI.begin();
@@ -359,9 +335,28 @@ void Adafruit_ILI9341::begin(void) {
 }
 
 
-void Adafruit_ILI9341::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
+void Adafruit_ILI9341_STM::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
                                         uint16_t y1) {
+#if defined (__STM32F1__)  
+  writecommand(ILI9341_CASET); // Column addr set
+  *dcport |=  dcpinmask;
+  *csport &= ~cspinmask;
+  SPI.setDataSize (SPI_CR1_DFF);
+  SPI.write(x0);
+  SPI.write(x1);
+//  SPI.setDataSize (0);
+  
+  writecommand(ILI9341_PASET); // Row addr set
+  *dcport |=  dcpinmask;
+  *csport &= ~cspinmask;
+//  SPI.setDataSize (SPI_CR1_DFF);
+  SPI.write(y0);
+  SPI.write(y1);
+  SPI.setDataSize (0);
 
+  writecommand(ILI9341_RAMWR); // write to RAM
+
+#else										
   writecommand(ILI9341_CASET); // Column addr set
   writedata(x0 >> 8);
   writedata(x0 & 0xFF);     // XSTART
@@ -375,10 +370,63 @@ void Adafruit_ILI9341::setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1,
   writedata(y1);     // YEND
 
   writecommand(ILI9341_RAMWR); // write to RAM
+#endif 
 }
 
+//***************
+void Adafruit_ILI9341_STM::pushColors(uint16_t *data, uint8_t len) {
+    uint16_t color;
+    spi_begin();
+    
+    *dcport |=  dcpinmask;
+    *csport &= ~cspinmask;
+    
+    
+    SPI.setDataSize (SPI_CR1_DFF); // Set SPI 16bit mode
+    SPI.dmaSend(data, len, 1);
+    SPI.setDataSize (0);
+     
+    /*
+    while(len--) {
+        color = *data++;
+        // This order is fast as we loop back & fetch during the SPI wait period!
+        spiwrite(color >> 8);
+        spiwrite(color);
+    }
+    */
+     
+ /*
+   SPI.setDataSize (SPI_CR1_DFF); // Set SPI 16bit mode
+SPI.dmaSend(data, len, 0);
+    SPI.setDataSize (0);
+  */
+    *csport |= cspinmask;
+    
+    spi_end();
+}
 
-void Adafruit_ILI9341::pushColor(uint16_t color) {
+// This is the byte array version for 16 bit raw images.
+void Adafruit_ILI9341_STM::pushColors(uint8_t *data, uint8_t len) {
+    spi_begin();
+     uint16_t color;
+    *dcport |=  dcpinmask;
+    *csport &= ~cspinmask;
+  
+    while(len--) {
+        // This order is fast as we loop back during the SPI wait period!
+         color = *data++;
+        spiwrite(color );
+        spiwrite(color);
+    }
+  
+    *csport |= cspinmask;
+    
+    spi_end();
+}
+ 
+//*******************
+
+void Adafruit_ILI9341_STM::pushColor(uint16_t color) {
   if (hwSPI) spi_begin();
   //digitalWrite(_dc, HIGH);
   *dcport |=  dcpinmask;
@@ -393,28 +441,25 @@ void Adafruit_ILI9341::pushColor(uint16_t color) {
   if (hwSPI) spi_end();
 }
 
-void Adafruit_ILI9341::drawPixel(int16_t x, int16_t y, uint16_t color) {
+void Adafruit_ILI9341_STM::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
   if ((x < 0) || (x >= _width) || (y < 0) || (y >= _height)) return;
 
   if (hwSPI) spi_begin();
   setAddrWindow(x, y, x + 1, y + 1);
 
-  //digitalWrite(_dc, HIGH);
   *dcport |=  dcpinmask;
-  //digitalWrite(_cs, LOW);
   *csport &= ~cspinmask;
 
   spiwrite(color >> 8);
   spiwrite(color);
 
   *csport |= cspinmask;
-  //digitalWrite(_cs, HIGH);
   if (hwSPI) spi_end();
 }
 
 
-void Adafruit_ILI9341::drawFastVLine(int16_t x, int16_t y, int16_t h,
+void Adafruit_ILI9341_STM::drawFastVLine(int16_t x, int16_t y, int16_t h,
                                         uint16_t color) {
 
   // Rudimentary clipping
@@ -422,68 +467,57 @@ void Adafruit_ILI9341::drawFastVLine(int16_t x, int16_t y, int16_t h,
 
   if ((y + h - 1) >= _height)
     h = _height - y;
+  if (h < 2 ) {
+	drawPixel(x, y, color);
+	return;
+  }
 
   //  if (hwSPI) spi_begin();
   setAddrWindow(x, y, x, y + h - 1);
 
-  uint8_t hi = color >> 8, lo = color;
-
   *dcport |=  dcpinmask;
-  //digitalWrite(_dc, HIGH);
   *csport &= ~cspinmask;
-  //digitalWrite(_cs, LOW);
   
 #if defined (__STM32F1__)
-  for (int i = 0; i < (h * 2) - 1 ; i = i + 2)
-  {
-    lineBuffer[i] = hi;
-    lineBuffer[i + 1] = lo;
-  }
-  dma_set_num_transfers(DMA1, DMA_CH3, h * 2); // 2 bytes per pixel
-  dma1_ch3_Active = true;
-  dma_enable(DMA1, DMA_CH3);
-  while (dma1_ch3_Active);
-
+  SPI.setDataSize (SPI_CR1_DFF); // Set SPI 16bit mode
+  lineBuffer[0] = color;
+  SPI.dmaSend(lineBuffer, h, 0);
+  SPI.setDataSize (0);
  #else
-   while (h--) {
-     spiwrite(hi);
-     spiwrite(lo);
-   }
+  uint8_t hi = color >> 8, lo = color;
+  while (h--) {
+    spiwrite(hi);
+    spiwrite(lo);
+  }
 #endif
   *csport |= cspinmask;
-  //digitalWrite(_cs, HIGH);
-  //  if (hwSPI) spi_end();
 }
 
 
-void Adafruit_ILI9341::drawFastHLine(int16_t x, int16_t y, int16_t w,
+void Adafruit_ILI9341_STM::drawFastHLine(int16_t x, int16_t y, int16_t w,
                                         uint16_t color) {
 
   
   // Rudimentary clipping
   if ((x >= _width) || (y >= _height || w < 1)) return;
   if ((x + w - 1) >= _width)  w = _width - x;
-  if (hwSPI) spi_begin();
-  setAddrWindow(x, y, x + w - 1, y);
+  if (w < 2 ) {
+	drawPixel(x, y, color);
+	return;
+  }
 
-  uint8_t hi = color >> 8, lo = color;
+//  if (hwSPI) spi_begin();
+  setAddrWindow(x, y, x + w - 1, y);
   *dcport |=  dcpinmask;
   *csport &= ~cspinmask;
-  //digitalWrite(_dc, HIGH);
-  //digitalWrite(_cs, LOW);
-#if defined (__STM32F1__)
 
-  for (int i = 0; i < (w * 2) - 1 ; i = i + 2)
-  {
-    lineBuffer[i] = hi;
-    lineBuffer[i + 1] = lo;
-  }
-  dma_set_num_transfers(DMA1, DMA_CH3, w * 2); // 2 bytes per pixel
-  dma1_ch3_Active = true;
-  dma_enable(DMA1, DMA_CH3);
-  while (dma1_ch3_Active) delayMicroseconds(1);
-  
+#if defined (__STM32F1__)
+  SPI.setDataSize (SPI_CR1_DFF); // Set spi 16bit mode
+  lineBuffer[0] = color;
+  SPI.dmaSend(lineBuffer, w, 0);
+  SPI.setDataSize (0);
 #else
+	uint8_t hi = color >> 8, lo = color;
     while (w--) {
       spiwrite(hi);
       spiwrite(lo);
@@ -491,51 +525,56 @@ void Adafruit_ILI9341::drawFastHLine(int16_t x, int16_t y, int16_t w,
 #endif
   *csport |= cspinmask;
   //digitalWrite(_cs, HIGH);
-  if (hwSPI) spi_end();
+//  if (hwSPI) spi_end();
 }
 
-void Adafruit_ILI9341::fillScreen(uint16_t color) {
+void Adafruit_ILI9341_STM::fillScreen(uint16_t color) {
+#if defined (__STM32F1__)
+  setAddrWindow(0, 0, _width - 1, _height - 1);
+  *dcport |=  dcpinmask;
+  *csport &= ~cspinmask;
+  SPI.setDataSize (SPI_CR1_DFF); // Set spi 16bit mode
+  lineBuffer[0] = color;
+  SPI.dmaSend(lineBuffer, (65535), 0);
+  SPI.dmaSend(lineBuffer, ((_width * _height) - 65535), 0);
+  SPI.setDataSize (0);
+
+#else
   fillRect(0, 0,  _width, _height, color);
+#endif 
 }
 
 // fill a rectangle
-void Adafruit_ILI9341::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
+void Adafruit_ILI9341_STM::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
                                    uint16_t color) {
 
   // rudimentary clipping (drawChar w/big text requires this)
   if ((x >= _width) || (y >= _height || h < 1 || w < 1)) return;
   if ((x + w - 1) >= _width)  w = _width  - x;
   if ((y + h - 1) >= _height) h = _height - y;
-
+  if (w == 1 && h == 1) {
+    drawPixel(x, y, color);
+    return;
+  }
+  
   if (hwSPI) spi_begin();
   setAddrWindow(x, y, x + w - 1, y + h - 1);
 
-  uint8_t hi = color >> 8, lo = color;
-
   *dcport |=  dcpinmask;
-  //digitalWrite(_dc, HIGH);
   *csport &= ~cspinmask;
-  //digitalWrite(_cs, LOW);
 #if defined (__STM32F1__)
-  
-  //moved this loop outside as we can fill the buffer once and send it multiple times.
-  for (int i = 0; i < (w * 2) - 1 ; i = i + 2)
-  {
-    lineBuffer[i] = hi;
-    lineBuffer[i + 1] = lo;
+  SPI.setDataSize (SPI_CR1_DFF); // Set spi 16bit mode
+  lineBuffer[0] = color;
+  if (w*h <= 65535) {
+  SPI.dmaSend(lineBuffer, (w*h), 0);
   }
-
-  for (y = h; y > 0; y--) {
-    //    for(x=w; x>0; x--) {
-    //      spiwrite(hi);
-    //      spiwrite(lo);
-    //    }
-    dma_set_num_transfers(DMA1, DMA_CH3, w * 2); // 2 bytes per pixel
-    dma1_ch3_Active = true;
-    dma_enable(DMA1, DMA_CH3);
-    while (dma1_ch3_Active) delayMicroseconds(1);
+  else {
+  SPI.dmaSend(lineBuffer, (65535), 0);
+  SPI.dmaSend(lineBuffer, ((w*h) - 65535), 0);
   }
+  SPI.setDataSize (0);
 #else
+  uint8_t hi = color >> 8, lo = color;
   for(y=h; y>0; y--) 
   {
     for(x=w; x>0; x--)
@@ -545,15 +584,127 @@ void Adafruit_ILI9341::fillRect(int16_t x, int16_t y, int16_t w, int16_t h,
     }
   }
 #endif
-
-  //digitalWrite(_cs, HIGH);
   *csport |= cspinmask;
   if (hwSPI) spi_end();
 }
 
+/*
+* Draw lines faster by calculating straight sections and drawing them with fastVline and fastHline.
+*/
+#if defined (__STM32F1__)
+void Adafruit_ILI9341_STM::drawLine(int16_t x0, int16_t y0,int16_t x1, int16_t y1, uint16_t color)
+{
+	if ((y0 < 0 && y1 <0) || (y0 > _height && y1 > _height)) return;
+	if ((x0 < 0 && x1 <0) || (x0 > _width && x1 > _width)) return;
+	if (x0 < 0) x0 = 0;
+	if (x1 < 0) x1 = 0;
+	if (y0 < 0) y0 = 0;
+	if (y1 < 0) y1 = 0;
+
+	if (y0 == y1) {
+		if (x1 > x0) {
+			drawFastHLine(x0, y0, x1 - x0 + 1, color);
+		}
+		else if (x1 < x0) {
+			drawFastHLine(x1, y0, x0 - x1 + 1, color);
+		}
+		else {
+			drawPixel(x0, y0, color);
+		}
+		return;
+	}
+	else if (x0 == x1) {
+		if (y1 > y0) {
+			drawFastVLine(x0, y0, y1 - y0 + 1, color);
+		}
+		else {
+			drawFastVLine(x0, y1, y0 - y1 + 1, color);
+		}
+		return;
+	}
+
+	bool steep = abs(y1 - y0) > abs(x1 - x0);
+	if (steep) {
+		swap(x0, y0);
+		swap(x1, y1);
+	}
+	if (x0 > x1) {
+		swap(x0, x1);
+		swap(y0, y1);
+	}
+
+	int16_t dx, dy;
+	dx = x1 - x0;
+	dy = abs(y1 - y0);
+
+	int16_t err = dx / 2;
+	int16_t ystep;
+
+	if (y0 < y1) {
+		ystep = 1;
+	}
+	else {
+		ystep = -1;
+	}
+
+	int16_t xbegin = x0;
+	lineBuffer[0] = color;
+	*csport &= ~cspinmask;
+	if (steep) {
+		for (; x0 <= x1; x0++) {
+			err -= dy;
+			if (err < 0) {
+				int16_t len = x0 - xbegin;
+				if (len) {
+					drawFastVLine (y0, xbegin, len + 1, color);
+					//writeVLine_cont_noCS_noFill(y0, xbegin, len + 1);
+				}
+				else {
+					drawPixel(y0, x0, color);
+					//writePixel_cont_noCS(y0, x0, color);
+				}
+				xbegin = x0 + 1;
+				y0 += ystep;
+				err += dx;
+			}
+		}
+		if (x0 > xbegin + 1) {
+			//writeVLine_cont_noCS_noFill(y0, xbegin, x0 - xbegin);
+			drawFastVLine(y0, xbegin, x0 - xbegin, color);
+		}
+
+	}
+	else {
+		for (; x0 <= x1; x0++) {
+			err -= dy;
+			if (err < 0) {
+				int16_t len = x0 - xbegin;
+				if (len) {
+					drawFastHLine(xbegin, y0, len + 1, color);
+					//writeHLine_cont_noCS_noFill(xbegin, y0, len + 1);
+				}
+				else {
+					drawPixel(x0, y0, color);
+					//writePixel_cont_noCS(x0, y0, color);
+				}
+				xbegin = x0 + 1;
+				y0 += ystep;
+				err += dx;
+			}
+		}
+		if (x0 > xbegin + 1) {
+			//writeHLine_cont_noCS_noFill(xbegin, y0, x0 - xbegin);
+			drawFastHLine(xbegin, y0, x0 - xbegin, color);
+		}
+	}
+	*csport |= cspinmask;
+}
+#endif
+
+
 
 // Pass 8-bit (each) R,G,B, get back 16-bit packed color
-uint16_t Adafruit_ILI9341::color565(uint8_t r, uint8_t g, uint8_t b) {
+uint16_t Adafruit_ILI9341_STM::color565(uint8_t r, uint8_t g, uint8_t b) {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
 
@@ -566,7 +717,7 @@ uint16_t Adafruit_ILI9341::color565(uint8_t r, uint8_t g, uint8_t b) {
 #define MADCTL_BGR 0x08
 #define MADCTL_MH  0x04
 
-void Adafruit_ILI9341::setRotation(uint8_t m) {
+void Adafruit_ILI9341_STM::setRotation(uint8_t m) {
 
   if (hwSPI) spi_begin();
   writecommand(ILI9341_MADCTL);
@@ -597,7 +748,7 @@ void Adafruit_ILI9341::setRotation(uint8_t m) {
 }
 
 
-void Adafruit_ILI9341::invertDisplay(boolean i) {
+void Adafruit_ILI9341_STM::invertDisplay(boolean i) {
   if (hwSPI) spi_begin();
   writecommand(i ? ILI9341_INVON : ILI9341_INVOFF);
   if (hwSPI) spi_end();
@@ -607,7 +758,7 @@ void Adafruit_ILI9341::invertDisplay(boolean i) {
 ////////// stuff not actively being used, but kept for posterity
 
 
-uint8_t Adafruit_ILI9341::spiread(void) {
+uint8_t Adafruit_ILI9341_STM::spiread(void) {
   uint8_t r = 0;
 
   if (hwSPI) {
@@ -643,7 +794,7 @@ uint8_t Adafruit_ILI9341::spiread(void) {
   return r;
 }
 
-uint8_t Adafruit_ILI9341::readdata(void) {
+uint8_t Adafruit_ILI9341_STM::readdata(void) {
   digitalWrite(_dc, HIGH);
   digitalWrite(_cs, LOW);
   uint8_t r = spiread();
@@ -653,7 +804,7 @@ uint8_t Adafruit_ILI9341::readdata(void) {
 }
 
 
-uint8_t Adafruit_ILI9341::readcommand8(uint8_t c, uint8_t index) {
+uint8_t Adafruit_ILI9341_STM::readcommand8(uint8_t c, uint8_t index) {
   if (hwSPI) spi_begin();
   digitalWrite(_dc, LOW); // command
   digitalWrite(_cs, LOW);
@@ -678,7 +829,7 @@ uint8_t Adafruit_ILI9341::readcommand8(uint8_t c, uint8_t index) {
 
 /*
 
- uint16_t Adafruit_ILI9341::readcommand16(uint8_t c) {
+ uint16_t Adafruit_ILI9341_STM::readcommand16(uint8_t c) {
  digitalWrite(_dc, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);
@@ -695,7 +846,7 @@ uint8_t Adafruit_ILI9341::readcommand8(uint8_t c, uint8_t index) {
  return r;
  }
 
- uint32_t Adafruit_ILI9341::readcommand32(uint8_t c) {
+ uint32_t Adafruit_ILI9341_STM::readcommand32(uint8_t c) {
  digitalWrite(_dc, LOW);
  if (_cs)
  digitalWrite(_cs, LOW);

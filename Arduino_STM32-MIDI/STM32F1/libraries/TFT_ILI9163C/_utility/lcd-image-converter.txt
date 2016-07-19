@@ -1,0 +1,2 @@
+This tool can be downloaded from the github of the original version of the library:
+https://github.com/sumotoy/TFT_ILI9163C/tree/master/_utility

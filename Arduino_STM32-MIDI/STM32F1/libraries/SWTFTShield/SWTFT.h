@@ -99,12 +99,12 @@ class SWTFT : public Adafruit_GFX {
 					  csPinUnset,  cdPinUnset,  wrPinUnset,  rdPinUnset,
 					  _reset;
   #endif
-#if defined (__STM32F1XX__)
+
     volatile uint32 *csPort    , *cdPort    , *wrPort    , *rdPort;
     uint32_t          csPinSet  ,  cdPinSet  ,  wrPinSet  ,  rdPinSet  ,
     csPinUnset,  cdPinUnset,  wrPinUnset,  rdPinUnset,
     _reset;
-    #endif
+
 #endif
 };
 

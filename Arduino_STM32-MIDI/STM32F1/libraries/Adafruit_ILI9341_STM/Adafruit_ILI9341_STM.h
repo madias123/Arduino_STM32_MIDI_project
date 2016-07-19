@@ -11,8 +11,15 @@ This library has been modified for the Maple Mini
 #include <Adafruit_GFX_AS.h>
 #include <avr/pgmspace.h>
 
+
+
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
+
+//new scroll commands
+#define ILI9341_VSCRDEF 0x33
+#define ILI9341_VSCRSADD 0x37
+// ****
 
 #define ILI9341_NOP     0x00
 #define ILI9341_SWRESET 0x01
@@ -92,18 +99,23 @@ This library has been modified for the Maple Mini
 #define ILI9341_GREENYELLOW 0xAFE5      /* 173, 255,  47 */
 #define ILI9341_PINK        0xF81F
 
-class Adafruit_ILI9341 : public Adafruit_GFX {
+class Adafruit_ILI9341_STM : public Adafruit_GFX {
 
  public:
 
-  Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _MOSI, int8_t _SCLK,
+  Adafruit_ILI9341_STM(int8_t _CS, int8_t _DC, int8_t _MOSI, int8_t _SCLK,
 		   int8_t _RST, int8_t _MISO);
-  Adafruit_ILI9341(int8_t _CS, int8_t _DC, int8_t _RST = -1);
+  Adafruit_ILI9341_STM(int8_t _CS, int8_t _DC, int8_t _RST = -1);
   
   void     begin(void),
            setAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1),
            pushColor(uint16_t color),
+    pushColors(uint16_t *data, uint8_t len),
+    pushColors(uint8_t *data, uint8_t len),
            fillScreen(uint16_t color),
+		   #if defined (__STM32F1__)
+		   drawLine(int16_t x0, int16_t y0,int16_t x1, int16_t y1, uint16_t color),
+		   #endif
            drawPixel(int16_t x, int16_t y, uint16_t color),
            drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color),
            drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color),
@@ -145,7 +157,7 @@ class Adafruit_ILI9341 : public Adafruit_GFX {
     volatile uint32 *mosiport, *clkport, *dcport, *rsport, *csport;
     uint32_t  _cs, _dc, _rst, _mosi, _miso, _sclk;
     uint32_t  mosipinmask, clkpinmask, cspinmask, dcpinmask;
-	volatile byte lineBuffer[640];
+	uint16_t lineBuffer[ILI9341_TFTHEIGHT]; // DMA buffer. 16bit color data per pixel
 #elif defined (__arm__)
     volatile RwReg *mosiport, *clkport, *dcport, *rsport, *csport;
     uint32_t  _cs, _dc, _rst, _mosi, _miso, _sclk;

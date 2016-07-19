@@ -36,7 +36,7 @@
 
 #include <libmaple/usb_midi_device.h>
 #include <MidiSpecs.h>
-#include <MinSysex.h>
+//#include <MinSysex.h>
 
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
@@ -50,7 +50,7 @@
 #include "usb_type.h"
 #include "usb_core.h"
 #include "usb_def.h"
-
+#include <libmaple/usb.h>
 /******************************************************************************
  ******************************************************************************
  ***
@@ -394,7 +394,7 @@ __weak DEVICE Device_Table = {
     .Total_Configuration = 1
 };
 
-#define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
+#define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */ // 0x40
 __weak DEVICE_PROP Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
@@ -554,7 +554,7 @@ static void midiDataRxCb(void) {
     usb_copy_from_pma((uint8*)midiBufferRx, n_unread_packets * 4,
                       USB_MIDI_RX_ADDR);
     
-    LglSysexHandler(midiBufferRx,&rx_offset,&n_unread_packets);
+  //  LglSysexHandler(midiBufferRx,&rx_offset,&n_unread_packets);
     
     if (n_unread_packets == 0) {
         usb_set_ep_rx_count(USB_MIDI_RX_ENDP, USB_MIDI_RX_EPSIZE);
@@ -688,8 +688,10 @@ static void usbSetConfiguration(void) {
 static void usbSetDeviceAddress(void) {
     USBLIB->state = USB_ADDRESSED;
 }
+
 // .............THIS IS NOT WORKING YET................
-// send debugging information to 
+// send debugging information to
+/*
 static uint8_t sysexbuffer[80]={CIN_SYSEX,0xF0,0x7D,0x33,CIN_SYSEX,0x33,0x00,0xf7}; // !!!bad hardcoded number foo !!!
 uint8_t iSysHexLine(uint8_t rectype, uint16_t address, uint8_t *payload,uint8_t payloadlength, uint8_t *buffer);
 void sendThroughSysex(char *printbuffer, int bufferlength) {
@@ -765,4 +767,4 @@ uint8_t iSysHexLine(uint8_t rectype, uint16_t address, uint8_t *payload,uint8_t 
     buffer[i++]=0xf7;
     return i+thirdone;
 }
-
+*/

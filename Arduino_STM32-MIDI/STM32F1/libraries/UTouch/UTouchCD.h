@@ -22,6 +22,6 @@
 #define CAL_S 0x000EF13FUL
  */
 
-#define CAL_X 0x03A140CBUL
-#define CAL_Y 0x002F0E92UL
+#define CAL_X 0x039F00FCUL
+#define CAL_Y 0x00354E84UL
 #define CAL_S 0x000EF13FUL

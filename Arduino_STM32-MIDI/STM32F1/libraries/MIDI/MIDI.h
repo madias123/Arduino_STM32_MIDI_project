@@ -22,7 +22,7 @@
  */
 
 #pragma once
-
+#include <usb_midi.h>
 #include "midi_Defs.h"
 #include "midi_Settings.h"
 #include "midi_Message.h"

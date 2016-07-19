@@ -173,17 +173,19 @@ pcd8544::pcd8544(uint8_t dc_pin, uint8_t reset_pin, uint8_t cs_pin, uint8_t hard
 	hardware_spi_num = hardware_spi;
 	if (hardware_spi_num > 2)
 		hardware_spi_num = 2;
+    /*
 #ifndef MAPLE
 	sdin = MOSI;
 	sclk = SCK;
 #else
-	sdin = 11;  // Change to maple names
-	sclk = 13;
+	sdin = 4;  // Change to maple names
+	sclk = 6;
 	if (hardware_spi_num  == 2) {
-		sdin = 32;
-		sclk = 34;
+		sdin = 29;
+		sclk = 31;
 	}
 #endif
+     */
 }
 
 pcd8544::pcd8544(uint8_t dc_pin, uint8_t reset_pin, uint8_t cs_pin, uint8_t sdin_pin, uint8_t sclk_pin)
@@ -213,8 +215,13 @@ void pcd8544::begin(void)
 	if (hardware_spi_num > 0) {
 #ifdef MAPLE
 		SPI.begin();
+        SPI.setClockDivider(SPI_CLOCK_DIV8);
+        SPI.setBitOrder(MSBFIRST);
+        SPI.setDataMode(SPI_MODE0);
+        #pragma message("compiling maple")
 		//spi_init(hardware_spi_num, SPI_PRESCALE_16, SPI_MSBFIRST, 0);
 #else
+        #pragma message("nooo")
 		pinMode(SS, OUTPUT); // To ensure master mode
 		SPCR |= (1<<SPE) | (1<<MSTR);
 #endif

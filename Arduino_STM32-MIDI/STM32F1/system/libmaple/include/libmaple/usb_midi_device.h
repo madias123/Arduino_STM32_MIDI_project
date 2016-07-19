@@ -38,7 +38,8 @@
 #include <libmaple/libmaple_types.h>
 #include <libmaple/gpio.h>
 #include <libmaple/usb.h>
-#include <MinSysex.h>
+#include "MidiSpecs.h"
+//#include <MinSysex.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +53,9 @@ typedef union {
 /*
  * USB MIDI Requests
  */
-
+// sysex global try
+    #define MAX_SYSEX_SIZE 256
+  //  volatile uint8 sysexBuffer[MAX_SYSEX_SIZE];
 /*
  * Descriptors, etc.
  */
@@ -139,15 +142,15 @@ typedef struct {
 #define USB_MIDI_CTRL_ENDP            0
 #define USB_MIDI_CTRL_RX_ADDR         0x40
 #define USB_MIDI_CTRL_TX_ADDR         0x80
-#define USB_MIDI_CTRL_EPSIZE          0x40
+#define USB_MIDI_CTRL_EPSIZE          0x40 // 0x40
 
 #define USB_MIDI_TX_ENDP              1
 #define USB_MIDI_TX_ADDR              0xC0
-#define USB_MIDI_TX_EPSIZE            0x40
+#define USB_MIDI_TX_EPSIZE            0x74 // 0x40 //74
 
 #define USB_MIDI_RX_ENDP              2
 #define USB_MIDI_RX_ADDR              0x100
-#define USB_MIDI_RX_EPSIZE            0x40
+#define USB_MIDI_RX_EPSIZE            0x74 // 0x40
 
 #ifndef __cplusplus
 #define USB_MIDI_DECLARE_DEV_DESC(vid, pid)                           \
@@ -173,7 +176,7 @@ typedef struct {
  * Sysex Stuff.
  */
  
-#define SYSEX_BUFFER_LENGTH 256
+#define SYSEX_BUFFER_LENGTH 1024
 
     
  /*

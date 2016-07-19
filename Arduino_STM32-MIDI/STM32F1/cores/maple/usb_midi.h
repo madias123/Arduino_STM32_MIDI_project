@@ -34,7 +34,7 @@
 
 #include <Print.h>
 #include <boards.h>
-
+#include "MidiSpecs.h"
 /*
  * This is the Midi class.  If you are just sending Midi data, you only need to make an
  *  instance of the class, passing it your serial port -- in most cases it looks like
@@ -92,7 +92,10 @@
  *
  *   This causes the Midi class to read data from the serial port and process it.
  */
-
+extern volatile uint8 myMidiChannel;
+extern volatile uint8 myMidiDevice;
+extern volatile uint8 myMidiCable;
+extern volatile uint8 myMidiID[];
 class USBMidi {
 private:
     // The serial port used by this Midi instance (it takes complete control over the port)
@@ -124,6 +127,9 @@ private:
     
     // This doesn't work -- by making it private, we ensure nobody ever calls it
     //Midi();
+    
+    // sysex stuff new (MD)
+    
     
 public:
     // Set this parameter to anything other than 0 to cause every MIDI update to
@@ -208,6 +214,12 @@ public:
     virtual void handleStop(void);
     virtual void handleActiveSense(void);
     virtual void handleReset(void);
+    
+
+    // sysex experimental
+    void handleSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2);
+    uint32 sysexvalue; // sysex return value
+    boolean sysexflag =0;
 };
 
 

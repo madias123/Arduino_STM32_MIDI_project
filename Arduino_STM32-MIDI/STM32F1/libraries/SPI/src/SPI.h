@@ -40,6 +40,7 @@
 
 #include <libmaple/libmaple_types.h>
 #include <libmaple/spi.h>
+#include <libmaple/dma.h>
 
 #include <boards.h>
 #include <stdint.h>
@@ -121,6 +122,7 @@ private:
 };
 
 
+volatile static bool dma1_ch3_Active;
 
 /**
  * @brief Wirish SPI interface.
@@ -130,6 +132,9 @@ private:
  */
 class SPIClass {
 public:
+
+
+
     /**
      * @param spiPortNumber Number of the SPI port to manage.
      */
@@ -178,6 +183,12 @@ public:
 	void attachInterrupt(void);
 	void detachInterrupt(void);
 	
+	/*	Victor Perez. Added to change datasize from 8 to 16 bit modes on the fly.
+	*	Input parameter should be SPI_CR1_DFF set to 0 or 1 on a 32bit word.
+	*	Requires an added function spi_data_size on  STM32F1 / cores / maple / libmaple / spi.c 
+	*/
+    void setDataSize(uint32 ds);
+	
 	
     /*
      * I/O
@@ -204,8 +215,14 @@ public:
      * @brief Transmit a byte.
      * @param data Byte to transmit.
      */
-    void write(uint8 data);
+//    void write(uint8 data);
 
+    /**
+     * @brief Transmit a half word.
+     * @param data to transmit.
+     */
+    void write(uint16 data);	
+	
     /**
      * @brief Transmit multiple bytes.
      * @param buffer Bytes to transmit.
@@ -221,7 +238,41 @@ public:
      * @param data Byte to transmit.
      * @return Next unread byte.
      */
-    uint8 transfer(uint8 data);
+    uint8 transfer(uint8 data) const;
+	
+	/**
+     * @brief Sets up a DMA Transfer for "length" bytes.
+     *
+     * This function transmits and receives to buffers.
+     *
+     * @param transmitBuf buffer Bytes to transmit. If passed as 0, it sends FF repeatedly for "length" bytes
+     * @param receiveBuf buffer Bytes to save received data. 
+     * @param length Number of bytes in buffer to transmit.
+	 */
+	uint8 dmaTransfer(uint8 *transmitBuf, uint8 *receiveBuf, uint16 length);
+
+	/**
+     * @brief Sets up a DMA Transmit for bytes.
+     *
+     * This function transmits and does not care about the RX fifo.
+     *
+     * @param transmitBuf buffer Bytes to transmit,
+     * @param length Number of bytes in buffer to transmit.
+	 * @param minc Set to use Memory Increment mode, clear to use Circular mode.
+     */
+	uint8 dmaSend(uint8 *transmitBuf, uint16 length, bool minc = 1);
+	
+	/**
+     * @brief Sets up a DMA Transmit for half words.
+	 * SPI PERFIPHERAL MUST BE SET TO 16 BIT MODE BEFORE
+     *
+     * This function transmits and does not care about the RX fifo.
+     *
+     * @param data buffer half words to transmit,
+     * @param length Number of bytes in buffer to transmit.
+     * @param minc Set to use Memory Increment mode (default if blank), clear to use Circular mode.
+     */
+	uint8 dmaSend(uint16 *transmitBuf, uint16 length, bool minc = 1);
 
     /*
      * Pin accessors
@@ -289,7 +340,17 @@ public:
 	
 	spi_dev *dev(){ return spi_d;}
 	
+	
+	
 private:
+
+	static inline void DMA1_CH3_Event() {
+		dma1_ch3_Active = 0;
+//		dma_disable(DMA1, DMA_CH3);
+//		dma_disable(DMA1, DMA_CH2);
+		
+		// To Do. Need to wait for 
+	}
 	spi_dev *spi_d;
 	uint8_t _SSPin;
 	uint32_t clockDivider;

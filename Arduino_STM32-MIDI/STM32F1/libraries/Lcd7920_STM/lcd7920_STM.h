@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 #include <Print.h>
-#define mosifast(P) gpio_write_bit(GPIOB, 10, (P)); // STM32-define mosipin not  in use -> much too fast!
-#define sckfast(P) gpio_write_bit(GPIOA, 8, (P));// STM32-define sck pin
+#define mosifast(P) gpio_write_bit(GPIOB, 11, (P)); // STM32-define mosipin not  in use -> much too fast!
+#define sckfast(P) gpio_write_bit(GPIOB, 10, (P));// STM32-define sck pin
+#define NOP __asm__ __volatile__ ("nop\n\t")
 // Enumeration for specifying drawing modes
 enum PixelMode
 {

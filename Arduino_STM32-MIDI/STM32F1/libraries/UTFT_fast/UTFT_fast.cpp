@@ -84,11 +84,13 @@
 	#elif defined(__MK20DX128__) || defined(__MK20DX256__)
 		#pragma message("Compiling for Teensy 3.x (MK20DX128VLH7 / MK20DX256VLH7)...")
 		#include "hardware/arm/HW_MX20DX256.h"
-	#elif defined(__STM32F1__)
+	#elif defined(__STM32F1XX__)
 		#pragma message("Compiling for Maple ...")
 		#include "hardware/arm/HW_STM32F1xx.h"
 	#else
-		#error "Unsupported ARM MCU!"
+		//#error "Unsupported ARM MCU!"
+#pragma message("Compiling for Maple ...")
+#include "hardware/arm/HW_STM32F1xx.h"
 	#endif
 #endif
 #include "memorysaver.h"

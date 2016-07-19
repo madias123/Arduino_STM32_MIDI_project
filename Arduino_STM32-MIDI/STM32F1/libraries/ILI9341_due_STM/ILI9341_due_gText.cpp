@@ -696,7 +696,7 @@ int ILI9341_due_gText::putChar(uint8_t c)
 {
 	if(_font == 0)
 	{
-		// Serial.println(F("No font selected"));
+		Serial.println(F("No font selected"));
 		return 0; // no font selected
 	}
 
@@ -1377,7 +1377,7 @@ void ILI9341_due_gText::drawStringPivotedOffseted(char *str, gTextAlign align, g
 	if(pixelsClearedOnLeft > 0)
 	{
 		int16_t clearX1 = max(min(_x, (int16_t)_area.x1), _x-(int16_t)pixelsClearedOnLeft);		
-		//// Serial.println(clearX1);
+		//Serial.println(clearX1);
 		_ili->fillRect(clearX1, _y, _x - clearX1, fontHeight(), _fontBgColor); 
 	}
 

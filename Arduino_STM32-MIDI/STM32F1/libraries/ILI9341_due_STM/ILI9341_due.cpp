@@ -156,18 +156,18 @@ bool ILI9341_due::begin(void)
 		writecommand_last(ILI9341_DISPON);    // Display on
 		delay(120);
 		_isInSleep = _isIdle = false;
-
+/*
 		uint8_t x = readcommand8(ILI9341_RDMODE);
-		// Serial.print(F("\nDisplay Power Mode: 0x")); // Serial.println(x, HEX);
+		Serial.print(F("\nDisplay Power Mode: 0x")); Serial.println(x, HEX);
 		x = readcommand8(ILI9341_RDMADCTL);
-		// Serial.print(F("\nMADCTL Mode: 0x")); // Serial.println(x, HEX);
+		Serial.print(F("\nMADCTL Mode: 0x")); Serial.println(x, HEX);
 		x = readcommand8(ILI9341_RDPIXFMT);
-		// Serial.print(F("\nPixel Format: 0x")); // Serial.println(x, HEX);
+		Serial.print(F("\nPixel Format: 0x")); Serial.println(x, HEX);
 		x = readcommand8(ILI9341_RDIMGFMT);
-		// Serial.print(F("\nImage Format: 0x")); // Serial.println(x, HEX);
+		Serial.print(F("\nImage Format: 0x")); Serial.println(x, HEX);
 		x = readcommand8(ILI9341_RDSELFDIAG);
-		// Serial.print(F("\nSelf Diagnostic: 0x")); // Serial.println(x, HEX);
-
+		Serial.print(F("\nSelf Diagnostic: 0x")); Serial.println(x, HEX);
+*/
 		return true;
 	}
 	else {
@@ -184,9 +184,9 @@ bool ILI9341_due::pinIsChipSelect(uint8_t cs)
 	}
 	else
 	{
-		// Serial.print("Pin ");
-		// Serial.print(_cs);
-		// Serial.println(" is not a valid Chip Select pin for SPI Extended Mode. Valid pins are 4, 10, 52");
+	//	Serial.print("Pin ");
+	//	Serial.print(_cs);
+	//	Serial.println(" is not a valid Chip Select pin for SPI Extended Mode. Valid pins are 4, 10, 52");
 		return false;
 	}
 #elif SPI_MODE_NORMAL | SPI_MODE_DMA
@@ -717,7 +717,7 @@ void ILI9341_due::screenshotToConsole()
 	uint32_t sameColorStartIndex = 0;
 	uint32_t totalImageDataLength = 0;
 
-	// Serial.println(F("==== PIXEL DATA START ===="));
+	Serial.println(F("==== PIXEL DATA START ===="));
 	//uint16_t x=0;
 	//uint16_t y=0;
 	setAddr_cont(0, 0, _width - 1, _height - 1);
@@ -806,10 +806,10 @@ void ILI9341_due::screenshotToConsole()
 	PrintHex8(color, 3);
 	}
 	}*/
-	// Serial.println();
-	// Serial.println(F("==== PIXEL DATA END ===="));
-	// Serial.print(F("Total Image Data Length: "));
-	// Serial.println(totalImageDataLength);
+	Serial.println();
+	Serial.println(F("==== PIXEL DATA END ===="));
+	Serial.print(F("Total Image Data Length: "));
+	Serial.println(totalImageDataLength);
 #if SPI_MODE_DMA
 	_dmaSpi.init(ILI9341_SPI_CLKDIVIDER);
 #endif
@@ -1533,14 +1533,14 @@ void ILI9341_due::setArcParams(float arcAngleMax, int arcAngleOffset)
 //	//SPI.setBitOrder(_cs, MSBFIRST);
 //	//SPI.setDataMode(_cs, SPI_MODE0);
 //	r = SPI.transfer(_cs, 0x00);
-//	// Serial.print("read: 0x"); // Serial.print(r, HEX);
+//	Serial.print("read: 0x"); Serial.print(r, HEX);
 //
 //	return r;
 //}
 //
 //void ILI9341_due::spiwrite(uint8_t c) {
 //
-//	//// Serial.print("0x"); // Serial.print(c, HEX); // Serial.print(", ");
+//	//Serial.print("0x"); Serial.print(c, HEX); Serial.print(", ");
 //
 //
 //	//SPI.setClockDivider(_cs, 12); // 8-ish MHz (full! speed!)
@@ -1596,7 +1596,7 @@ void ILI9341_due::printHex8(uint8_t *data, uint8_t length) // prints 8-bit data 
 		if (second > 9) tmp[i * 2 + 1] += 7;
 	}
 	tmp[length * 2] = 0;
-	// Serial.print(tmp);
+	Serial.print(tmp);
 }
 
 
@@ -1627,7 +1627,7 @@ void ILI9341_due::printHex16(uint16_t *data, uint8_t length) // prints 8-bit dat
 		if (fourth > 9) tmp[i * 4 + 3] += 7;
 	}
 	tmp[length * 4] = 0;
-	// Serial.print(tmp);
+	Serial.print(tmp);
 }
 
 void ILI9341_due::printHex32(uint32_t *data, uint8_t length) // prints 8-bit data in hex
@@ -1666,5 +1666,5 @@ void ILI9341_due::printHex32(uint32_t *data, uint8_t length) // prints 8-bit dat
 		if (dataByte[7] > 9) tmp[i * 4 + 7] += 7;
 	}
 	tmp[length * 8] = 0;
-	// Serial.print(tmp);
+	Serial.print(tmp);
 }
